@@ -29,6 +29,8 @@ import com.law.chat.client.MessageDisplayer;
 public class MessageScrollComponent extends JComponent implements MessageDisplayer {
 	
 	private static final String NEW_LINE = System.getProperty("line.separator");
+	private static final String USER_NAME_STYLE_SUFFIX = "_userNameStyle";
+	private static final String USER_MSG_STYLE_SUFFIX = "_userMsgStyle";
 	
 	private StyledDocument doc;
 	private JScrollPane scrollPane;
@@ -78,6 +80,23 @@ public class MessageScrollComponent extends JComponent implements MessageDisplay
 		return doc.addStyle(styleName, parentStyle);
 	}
 	
+	public void setUserColor(String userName, Color c) {
+		String nameStyleName = userName + USER_NAME_STYLE_SUFFIX;
+		String msgStyleName = userName + USER_MSG_STYLE_SUFFIX;
+		
+		Style nameStyle = doc.getStyle(nameStyleName);
+		if (nameStyle == null) {
+			nameStyle = doc.addStyle(nameStyleName, doc.getStyle("chatNameStyle"));
+		}
+		StyleConstants.setForeground(nameStyle, c);
+		
+		Style msgStyle = doc.getStyle(msgStyleName);
+		if (msgStyle == null) {
+			msgStyle = doc.addStyle(msgStyleName, doc.getStyle("chatMsgStyle"));
+		}
+		StyleConstants.setForeground(msgStyle, c);
+	}
+	
 	@Override
 	public void setBackground(Color c) {
 		textPane.setBackground(c);
@@ -92,27 +111,43 @@ public class MessageScrollComponent extends JComponent implements MessageDisplay
 	}
 	
 	synchronized public void appendMessage(String msg, String style) {
+		String insertStr = "> " + msg + NEW_LINE;
 		try {
-			String insertStr = "> " + msg + NEW_LINE;
 			doc.insertString(doc.getLength(), insertStr, doc.getStyle(style));
-			scrollToBottom();
 		}
 		catch (BadLocationException e) {
 			e.printStackTrace();
 		}
+		
+		scrollToBottom();
 	}
 	
-	synchronized private void appendChat(String name, String msg) {
+	synchronized private void appendChat(String userName, String msg) {
+		String nameStr = "> [" + userName + "] ";
+		String msgStr = msg + NEW_LINE;
+		
+		String nameStyleName = userName + USER_NAME_STYLE_SUFFIX;
+		String msgStyleName = userName + USER_MSG_STYLE_SUFFIX;
+		
+		Style nameStyle = doc.getStyle(nameStyleName);
+		if (nameStyle == null) {
+			nameStyle = doc.getStyle("chatNameStyle");
+		}
+		
+		Style msgStyle = doc.getStyle(msgStyleName);
+		if (msgStyle == null) {
+			msgStyle = doc.getStyle("chatMsgStyle");
+		}
+			
 		try {
-			String nameStr = "> [" + name + "] ";
-			String msgStr = msg + NEW_LINE;
-			doc.insertString(doc.getLength(), nameStr, doc.getStyle("chatNameStyle"));
-			doc.insertString(doc.getLength(), msgStr, doc.getStyle("chatMsgStyle"));
-			scrollToBottom();
+			doc.insertString(doc.getLength(), nameStr, nameStyle);
+			doc.insertString(doc.getLength(), msgStr, msgStyle);
 		}
 		catch (BadLocationException e) {
 			e.printStackTrace();
 		}
+		
+		scrollToBottom();
 	}
 	
 	private void scrollToBottom() {

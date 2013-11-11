@@ -18,17 +18,19 @@ public class ChatServiceImplTest {
 	
 	private static final int PORT_NUM = 6948;
 	
-	private static ChatService chatService;
+	private static ServerService serverService;
+	private static ClientService clientService;
 	
 	@BeforeClass
 	public static void startServer() throws IOException {
-		chatService = new ChatServiceImpl();
-		chatService.startServer(PORT_NUM);
+		serverService = new ServerServiceImpl();
+		clientService = new ClientServiceImpl();
+		serverService.startServer(PORT_NUM);
 	}
 	
 	@AfterClass
 	public static void stopServer() {
-		chatService.shutdownServer();
+		serverService.shutdownServer();
 	}
 	
 	@Test
@@ -36,9 +38,9 @@ public class ChatServiceImplTest {
 		MessageDisplayer messageDisplayer1 = mock(MessageDisplayer.class);
 		MessageDisplayer messageDisplayer2 = mock(MessageDisplayer.class);
 		MessageDisplayer messageDisplayer3 = mock(MessageDisplayer.class);
-		ChatClient client1 = chatService.connectClient(null, PORT_NUM, "user_1", messageDisplayer1);
-		ChatClient client2 = chatService.connectClient(null, PORT_NUM, "user_2", messageDisplayer2);
-		ChatClient client3 = chatService.connectClient(null, PORT_NUM, "user_3", messageDisplayer3);
+		ChatClient client1 = clientService.connectClient(null, PORT_NUM, "user_1", messageDisplayer1);
+		ChatClient client2 = clientService.connectClient(null, PORT_NUM, "user_2", messageDisplayer2);
+		ChatClient client3 = clientService.connectClient(null, PORT_NUM, "user_3", messageDisplayer3);
 		
 		client1.sendChat("hello world");
 		
@@ -59,9 +61,9 @@ public class ChatServiceImplTest {
 		MessageDisplayer messageDisplayer1 = mock(MessageDisplayer.class);
 		MessageDisplayer messageDisplayer2 = mock(MessageDisplayer.class);
 		MessageDisplayer messageDisplayer3 = mock(MessageDisplayer.class);
-		ChatClient client1 = chatService.connectClient(null, PORT_NUM, "user_1", messageDisplayer1);
-		ChatClient client2 = chatService.connectClient(null, PORT_NUM, "user_2", messageDisplayer2);
-		ChatClient client3 = chatService.connectClient(null, PORT_NUM, "user_3", messageDisplayer3);
+		ChatClient client1 = clientService.connectClient(null, PORT_NUM, "user_1", messageDisplayer1);
+		ChatClient client2 = clientService.connectClient(null, PORT_NUM, "user_2", messageDisplayer2);
+		ChatClient client3 = clientService.connectClient(null, PORT_NUM, "user_3", messageDisplayer3);
 		
 		client1.sendTell("user_2", "hello user 2");
 		
@@ -79,8 +81,8 @@ public class ChatServiceImplTest {
 	
 	@Test
 	public void connectSameName() {
-		ChatClient client1 = chatService.connectClient(null, PORT_NUM, "user", null);
-		ChatClient client2 = chatService.connectClient(null, PORT_NUM, "user", null);
+		ChatClient client1 = clientService.connectClient(null, PORT_NUM, "user", null);
+		ChatClient client2 = clientService.connectClient(null, PORT_NUM, "user", null);
 		client1.logout();
 		client2.logout();
 	}

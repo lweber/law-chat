@@ -85,10 +85,13 @@ implements MessageDisplayer, KeyListener {
 		return mc.addStyle(styleName, parentStyle);
 	}
 	
+	public void setUserColor(String userName, Color c) {
+		mc.setUserColor(userName, c);
+	}
+	
 	@Override
 	public void setBackground(Color c) {
 		mc.setBackground(c);
-//		editField.setBackground(c);
 		editField.setBorder(BorderFactory.createLineBorder(c));
 	}
 	
