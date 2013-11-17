@@ -23,7 +23,7 @@ import com.law.network.SocketHandler.Mode;
 public class ChatClientImpl implements ChatClient {
 	
 	private String userName;
-	private MessageProcessor messageProcessor = new MessageProcessor();
+	private MessageProcessor messageProcessor;
 	private SocketHandler socketWriter;
 	private SocketHandler socketReader;
 	
@@ -47,8 +47,6 @@ public class ChatClientImpl implements ChatClient {
 		this.userName = userName;
 		try {
 			Socket clientSocket = new Socket(hostName, portNum);
-			// Two threads: one sends our messages to the server, and one
-			// waits for messages to come in from the server.
 			
 			// The writer thread writes this user's message to the chat server.
 			socketWriter = new SocketHandler(clientSocket, Mode.MODE_WRITE, null, null);
@@ -57,6 +55,7 @@ public class ChatClientImpl implements ChatClient {
 			socketWriter.start();
 			
 			// The reader thread displays other user's messages.
+			messageProcessor = new MessageProcessor();
 			messageProcessor.addMessageDisplayer(messageDisplayer);
 			socketReader = new SocketHandler(clientSocket, Mode.MODE_READ, messageProcessor, null);
 			socketReader.start();
@@ -78,26 +77,25 @@ public class ChatClientImpl implements ChatClient {
 	}
 	
 	public void sendChat(String chatMessage) {
-		DataLine chatMsg = new DataLine(ChatMessage.CHAT);
-		chatMsg.addInfo(userName);
-		chatMsg.addInfo(chatMessage);
-		chatMsg.sendTo(socketWriter);
+		new DataLine(ChatMessage.CHAT)
+				.addInfo(userName)
+				.addInfo(chatMessage)
+				.sendTo(socketWriter);
 	}
 	
 	public void sendTell(String toName, String chatMessage) {
-		DataLine chatMsg = new DataLine(ChatMessage.TELL);
-		chatMsg.addInfo(userName);
-		chatMsg.addInfo(toName);
-		chatMsg.addInfo(chatMessage);
-		chatMsg.sendTo(socketWriter);
+		new DataLine(ChatMessage.TELL)
+				.addInfo(userName)
+				.addInfo(toName)
+				.addInfo(chatMessage)
+				.sendTo(socketWriter);
 	}
 	
 	public void logout() {
-		DataLine chatMsg = new DataLine(ChatMessage.QUIT);
-		chatMsg.addInfo(userName);
 		try {
-			// Tell the server we are leaving.
-			chatMsg.writeTo(socketWriter);
+			new DataLine(ChatMessage.QUIT)
+					.addInfo(userName)
+					.writeTo(socketWriter);
 		}
 		catch (IOException e) {
 			e.printStackTrace();

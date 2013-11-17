@@ -21,13 +21,13 @@ import com.law.network.SocketShutdownListener;
  * Server-side chat handler.
  * 
  * <p> Handle a chat server by instantiating a server socket and running a
- * separate thread to wait for client sockets. For each client socket accepted,
- * a separate SocketHandler thread is started using MODE_READ to read data from
- * the client, and then sending the data to all of the other clients, or just
- * one other client if the message is a directed tell.
+ * separate thread to wait for client sockets. For each client socket accepted
+ * a SocketHandler thread is started using MODE_READ to read messages from the
+ * client. The message is then sent to all of the other clients (or just one
+ * other client if the message is a tell).
  * 
- * <p> The chat server starts and uses one thread, plus one additional thread
- * for each chat client that joins.
+ * <p> The chat server uses one thread plus one additional thread for each chat
+ * client that joins.
  * 
  * @author lweber
  */
@@ -54,7 +54,7 @@ implements SocketReadProcessor, SocketShutdownListener {
 		}
 		catch (IOException e) {
 			// TODO logging
-//			NetworkUtil.logErr(getClass().getName() + ": Could not listen on port "
+//			logErr(getClass().getName() + ": Could not listen on port "
 //					+ portNum + ": " + e);
 			throw e;
 		}
@@ -73,7 +73,7 @@ implements SocketReadProcessor, SocketShutdownListener {
 	synchronized static public ChatServer startServer(int portNum)
 	throws IOException {
 		if (serverSingleton != null) {
-//			NetworkUtil.logAndThrowException(
+//			logAndThrowException(
 //					"ChatServer.startServer(): cannot start the server, it is already started.");
 		}
 		else {
@@ -84,21 +84,8 @@ implements SocketReadProcessor, SocketShutdownListener {
 		return serverSingleton;
 	}
 	
-	@Override
-	public void run() {
-		while (true) {
-			try {
-				Socket clientSocket = serverSocket.accept();
-				addChatClient(clientSocket);
-			}
-			catch (IOException e) {
-//				NetworkUtil.logErr(getClass().getName() + ": serverSocket.accept() failed: " + e);
-			}
-		}
-	}
-	
 	/**
-	 * Send a message to the cliends, close the server socket, stop all the
+	 * Send a message to the clients, close the server socket, stop all the
 	 * client socket handlers, and null the singleton.
 	 */
 	synchronized static public void shutdownServer() {
@@ -121,6 +108,19 @@ implements SocketReadProcessor, SocketShutdownListener {
 			}
 			
 			serverSingleton = null;
+		}
+	}
+	
+	@Override
+	public void run() {
+		while (true) {
+			try {
+				Socket clientSocket = serverSocket.accept();
+				addChatClient(clientSocket);
+			}
+			catch (IOException e) {
+//				logErr(getClass().getName() + ": serverSocket.accept() failed: " + e);
+			}
 		}
 	}
 	
@@ -164,8 +164,14 @@ implements SocketReadProcessor, SocketShutdownListener {
 		}
 	}
 	
+	/**
+	 * Process messages sent to the server by a client.
+	 * 
+	 * <p> The socket handler uses MODE_READ so the return value does not matter.
+	 * 
+	 * @return null.
+	 */
 	synchronized public String processDataFromSocket(String data, long fromId) {
-		// Called server-side, when a client sends a message.
 		DataLine chatMsg = new DataLine(data);
 		switch (chatMsg.toType(ChatMessage.class)) {
 		case CHAT:
@@ -183,7 +189,6 @@ implements SocketReadProcessor, SocketShutdownListener {
 			if (sh != null) {
 				sh.stopHandler();
 			}
-			
 			// TODO This message may be redundant.
 			DataLine serverMsg = new DataLine(ChatMessage.SRVR_MSG);
 			serverMsg.addInfo("'" + quitName + "' has left the chat server.");
@@ -191,16 +196,14 @@ implements SocketReadProcessor, SocketShutdownListener {
 			break;
 			
 		default:
-			// Returning this string doesn't have any affect since the return
-			// value of a socket handler in read mode is ignored.
-			return "Unknown chat command: " + data;
+			break;
 		}
 		
 		return null;
 	}
 	
 	/**
-	 * Called when the read socket handler closes, for example, if the client
+	 * Called when a client socket handler closes, for example, if a client
 	 * closes their window.
 	 */
 	synchronized public void socketClosing(SocketHandler socketHandler) {
